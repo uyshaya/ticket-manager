@@ -2,7 +2,6 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 
 ### Saved ticket data, recreated on every run ###
-tickets.csv
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin

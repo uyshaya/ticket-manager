@@ -1,0 +1,8 @@
+type,code,owner,priority,status,hours,extra1,extra2
+SUPPORT,101,Chandler,Normal,Open,8.0,Premium
+SUPPORT,102,Monica,High,In-progress,8.0,Basic
+BUG,103,Ross,Low,Open,8.0,4
+BUG,104,Rachel,Normal,Open,8.0,2
+MAINTENANCE,105,Phoebe,Normal,Open,12.0,3,true
+MAINTENANCE,106,Joey,High,Closed,12.0,3,false
+BUG,107,Monica,High,Open,20.0,1
