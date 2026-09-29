@@ -39,6 +39,10 @@ public abstract class Ticket implements Reportable {
         return VALID_PRIORITIES;
     }
 
+    public static Set<String> getValidStatuses() {
+        return VALID_STATUSES;
+    }
+
     public int getCode() {
         return code;
     }
@@ -77,6 +81,15 @@ public abstract class Ticket implements Reportable {
 
     /** Returns the severity label, such as "Critical". */
     public abstract String getSeverity();
+
+    /** Returns the ticket as one CSV row. */
+    public abstract String toCsvRow();
+
+    /** Returns the leading CSV columns shared by every ticket type. */
+    protected String csvCommonColumns(String type) {
+        return type + "," + code + "," + owner + "," + priority + "," + status + ","
+                + allocatedTimeInHours;
+    }
 
     /** Returns true when the allocated time is already past the deadline. */
     public boolean isAtRisk() {

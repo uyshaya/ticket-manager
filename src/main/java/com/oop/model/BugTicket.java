@@ -45,6 +45,11 @@ public class BugTicket extends Ticket {
         return bugLevel * 8.0;
     }
 
+    @Override
+    public String toCsvRow() {
+        return csvCommonColumns("BUG") + "," + bugLevel;
+    }
+
     /** Returns the severity for the bug level, from "Critical" down to "Cosmetic". */
     @Override
     public String getSeverity() {

@@ -35,6 +35,11 @@ public class MaintenanceTicket extends Ticket {
         return daysUntilWindow * 8.0;
     }
 
+    @Override
+    public String toCsvRow() {
+        return csvCommonColumns("MAINTENANCE") + "," + daysUntilWindow + "," + requiresDowntime;
+    }
+
     /** Returns "Planned - Downtime" if the system must go offline, otherwise "Planned". */
     @Override
     public String getSeverity() {

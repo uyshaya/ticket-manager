@@ -6,7 +6,9 @@ import com.oop.model.Reportable;
 import com.oop.model.SupportTicket;
 import com.oop.model.Ticket;
 import com.oop.service.TicketManager;
+import com.oop.storage.TicketFileStore;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -24,13 +26,21 @@ public class ConsoleApp {
 
     private final Scanner scanner;
 
-    public ConsoleApp(Scanner scanner) {
+    private final TicketFileStore store;
+
+    // True when the saved file could not be read at start-up.
+    private boolean loadFailed;
+
+    public ConsoleApp(Scanner scanner, TicketFileStore store) {
         this.scanner = scanner;
+        this.store = store;
     }
 
-    /** Loads the sample tickets, then shows the menu until the user exits or input runs out. */
+    /**
+     * Loads the saved tickets, runs the menu until the user exits or input runs out, then saves.
+     */
     public void run() {
-        seedSampleTickets();
+        loadTickets();
         printBanner();
 
         boolean running = true;
@@ -52,7 +62,60 @@ public class ConsoleApp {
         }
 
         System.out.println();
+        saveTickets();
         System.out.println("Goodbye.");
+    }
+
+    /**
+     * Fills the manager from the saved file, or with the sample tickets when there is no file
+     * yet. A file that cannot be read leaves the manager empty.
+     */
+    private void loadTickets() {
+        if (!store.exists()) {
+            seedSampleTickets();
+            System.out.println();
+            System.out.println("  No " + store.getFileName() + " yet, so sample tickets were loaded.");
+            return;
+        }
+
+        try {
+            for (Ticket ticket : store.load()) {
+                manager.add(ticket);
+            }
+            for (String warning : store.getLoadWarnings()) {
+                System.out.println("  Skipped " + warning);
+            }
+        } catch (IOException e) {
+            loadFailed = true;
+            System.out.println();
+            System.out.println("  Could not read the saved tickets: " + reasonFor(e));
+            System.out.println("  Starting with no tickets. Your file will be left alone.");
+        }
+    }
+
+    /**
+     * Writes the tickets back to the file, reporting the problem if that fails. Nothing is
+     * written when the file could not be read at start-up.
+     */
+    private void saveTickets() {
+        if (loadFailed) {
+            System.out.println("Not saving, because " + store.getFileName()
+                    + " could not be read. It is unchanged.");
+            return;
+        }
+
+        try {
+            store.save(manager.allTickets());
+            System.out.println("Saved " + manager.size() + " ticket(s) to " + store.getFileName() + ".");
+        } catch (IOException e) {
+            System.out.println("Could not save the tickets: " + reasonFor(e));
+        }
+    }
+
+    /** Turns a file error into a readable reason. */
+    private static String reasonFor(IOException e) {
+        String message = e.getMessage();
+        return (message == null || message.isBlank()) ? e.getClass().getSimpleName() : message;
     }
 
     /** Asks for a new ticket's details and stores it. */
@@ -75,7 +138,7 @@ public class ConsoleApp {
             return;
         }
 
-        String owner = readLine("  Owner: ");
+        String owner = readOwner();
         if (owner == null) {
             return;
         }
@@ -202,10 +265,7 @@ public class ConsoleApp {
         System.out.println("  Deleted ticket #" + code + ". " + manager.size() + " remaining.");
     }
 
-    /**
-     * Prints a titled block of entries. Every entry supplies its own line and decides whether it
-     * needs flagging, so no type checks are needed here.
-     */
+    /** Prints a titled block of entries, one line each, flagging the ones that need attention. */
     private void printSection(String title, List<? extends Reportable> entries) {
         System.out.println();
         System.out.println("  " + title);
@@ -238,7 +298,7 @@ public class ConsoleApp {
         System.out.println("=".repeat(LINE_WIDTH));
         System.out.println("  TICKET MANAGER");
         System.out.println("=".repeat(LINE_WIDTH));
-        System.out.println("  Loaded " + manager.size() + " sample ticket(s).");
+        System.out.println("  Loaded " + manager.size() + " ticket(s).");
     }
 
     /** Prints the list of menu options. */
@@ -263,6 +323,23 @@ public class ConsoleApp {
             return null;
         }
         return scanner.nextLine().trim();
+    }
+
+    /** Reads an owner name, asking again until it is not empty and has no comma. */
+    private String readOwner() {
+        while (true) {
+            String input = readLine("  Owner: ");
+            if (input == null) {
+                return null;
+            }
+            if (input.isEmpty()) {
+                System.out.println("  Owner cannot be empty.");
+            } else if (input.contains(",")) {
+                System.out.println("  Owner cannot contain a comma.");
+            } else {
+                return input;
+            }
+        }
     }
 
     /** Reads a whole number, asking again until one is typed. */

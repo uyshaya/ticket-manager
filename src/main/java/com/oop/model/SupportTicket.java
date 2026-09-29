@@ -43,6 +43,11 @@ public class SupportTicket extends Ticket {
         return 24.0;
     }
 
+    @Override
+    public String toCsvRow() {
+        return csvCommonColumns("SUPPORT") + "," + serviceTier;
+    }
+
     /** Returns "High" for Premium customers and "Normal" for everyone else. */
     @Override
     public String getSeverity() {
